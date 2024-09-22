@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salvar Links e Textos - Firebase</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        #container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            max-width: 100%;
+        }
+        h2 {
+            text-align: center;
+            color: #ff6f61;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #ff7043;
+        }
+        #saved-texts {
+            margin-top: 20px;
+        }
+        .saved-item {
+            background-color: #fafafa;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+    </style>
+    <!-- Adicionar os scripts do Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+<body>
+
+    <div id="container">
+        <h2>Salvar Links e Textos</h2>
+        <textarea id="text-input" placeholder="Digite ou cole o link/texto aqui..."></textarea>
+        <button onclick="saveText()">Salvar Texto</button>
+
+        <div id="saved-texts">
+            <h3>Textos Salvos:</h3>
+            <div id="text-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Configuração do Firebase (substitua pelos dados fornecidos pelo Firebase)
+        const firebaseConfig = {
+            apiKey: "SUA_API_KEY",
+            authDomain: "salvar-textos-e-links.firebaseapp.com",
+            projectId: "salvar-textos-e-links",
+            storageBucket: "salvar-textos-e-links.appspot.com",
+            messagingSenderId: "220252756821",
+            appId: "1:220252756821:web:19b918d04fcd4ac01f6ddc",
+            measurementId: "G-YCEW8E7Q3Q"
+        };
+
+        // Inicializar Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore(app);
+
+        // Função para salvar o texto no Firebase Firestore
+        function saveText() {
+            const textInput = document.getElementById('text-input').value;
+            if (textInput.trim() !== '') {
+                db.collection("texts").add({
+                    content: textInput,
+                    timestamp: new Date()
+                }).then(() => {
+                    document.getElementById('text-input').value = ''; // Limpa o campo
+                    displaySavedTexts(); // Atualiza a lista de textos
+                });
+            }
+        }
+
+        // Função para exibir os textos salvos
+        function displaySavedTexts() {
+            const textList = document.getElementById('text-list');
+            textList.innerHTML = ''; // Limpa a lista antes de exibir
+
+            db.collection("texts").orderBy("timestamp", "desc").get().then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    const text = doc.data().content;
+                    const textItem = document.createElement('div');
+                    textItem.classList.add('saved-item');
+                    textItem.innerHTML = `
+                        <p>${text}</p>
+                        <button onclick="deleteText('${doc.id}')">Excluir</button>
+                    `;
+                    textList.appendChild(textItem);
+                });
+            });
+        }
+
+        // Função para excluir um texto específico
+        function deleteText(id) {
+            db.collection("texts").doc(id).delete().then(() => {
+                displaySavedTexts(); // Atualiza a lista de textos
+            });
+        }
+
+        // Exibe os textos salvos ao carregar a página
+        window.onload = displaySavedTexts;
+    </script>
+
+</body>
+</html>
